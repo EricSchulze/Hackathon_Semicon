@@ -1,0 +1,6 @@
+PyYAML>=6.0
+
+# X.509 parsing and signature verification for `prove-cert` and CSR signing.
+# Imported lazily, so the other commands run without it installed.
+# ML-DSA (post-quantum) public-key and CSR parsing requires cryptography>=46.
+cryptography>=46.0
