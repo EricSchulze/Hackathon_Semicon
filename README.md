@@ -215,6 +215,58 @@ Report total memory impact, not just individual key sizes. Include certificates,
 - Large PQC objects are handled safely, with bounded memory use.
 - The implementation is reproducible, understandable, and testable.
 
+
+## Abbreviations and Terms
+
+| Abbreviation or term | Meaning |
+|---|---|
+| AN | Application Note |
+| BMC | Baseboard Management Controller |
+| BSP | Board Support Package |
+| BSI | Bundesamt für Sicherheit in der Informationstechnik, Germany's Federal Office for Information Security |
+| CE | Code Example |
+| CNSA 2.0 | Commercial National Security Algorithm Suite, version 2.0 |
+| CXL | Compute Express Link |
+| DMTF | Distributed Management Task Force |
+| DORA | Digital Operational Resilience Act |
+| DPU | Data Processing Unit |
+| ECDH | Elliptic-Curve Diffie-Hellman |
+| ECDHE | Ephemeral Elliptic-Curve Diffie-Hellman |
+| ECDSA | Elliptic Curve Digital Signature Algorithm |
+| ECC | Elliptic-Curve Cryptography |
+| EO 14028 | Executive Order 14028, “Improving the Nation's Cybersecurity” |
+| EPBL | Edge Protect Bootloader |
+| EU | European Union |
+| FIPS | Federal Information Processing Standards |
+| FLASH_BOOT | A platform boot stage that runs from flash; see the platform documentation for its exact behavior |
+| GPU | Graphics Processing Unit |
+| KEM | Key-Encapsulation Mechanism |
+| MCU | Microcontroller Unit |
+| MCUboot | The bootloader project and image format used by the platform; the name is not expanded as an acronym |
+| ML-DSA | Module-Lattice-Based Digital Signature Algorithm; standardized in NIST FIPS 204 |
+| ML-KEM | Module-Lattice-Based Key-Encapsulation Mechanism; standardized in NIST FIPS 203 |
+| NCSC | National Cyber Security Centre; UK NCSC refers to the United Kingdom's centre |
+| NIS2 | Network and Information Security Directive 2 |
+| NIST | National Institute of Standards and Technology |
+| NIST IR | NIST Interagency/Internal Report, a NIST publication series |
+| NSM 10 | National Security Memorandum 10 |
+| OEM | Original Equipment Manufacturer |
+| PCIe | Peripheral Component Interconnect Express |
+| PQC | Post-Quantum Cryptography |
+| PSoC | Programmable System-on-Chip |
+| RAM | Random-Access Memory |
+| RoT | Root of Trust |
+| ROM | Read-Only Memory |
+| ROM_BOOT | A platform boot stage that runs from ROM; see the platform documentation for its exact behavior |
+| SLH-DSA | Stateless Hash-Based Digital Signature Algorithm; standardized in NIST FIPS 205 |
+| SmartNIC | Smart Network Interface Card |
+| SPDM | Security Protocol and Data Model |
+| TF-M | Trusted Firmware-M |
+| UK | United Kingdom |
+| U.S. | United States |
+
+**Document and product identifiers:** FIPS 203 specifies ML-KEM, FIPS 204 specifies ML-DSA, and FIPS 205 specifies SLH-DSA. Identifiers such as `AN243370`, `PSC3M6GES3A HQ1`, and `KIT_PSC3M6_EVAL` are document, device-configuration, and evaluation-kit identifiers, respectively. ModusToolbox is a product name.
+
 ## Useful Links
 
 Some referenced materials are also available in this repository. These links point to the original sources:
