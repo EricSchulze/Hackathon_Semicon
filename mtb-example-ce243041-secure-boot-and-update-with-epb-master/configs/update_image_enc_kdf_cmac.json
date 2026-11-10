@@ -1,0 +1,52 @@
+{
+    "schema-version": 1.0,
+    "content": [
+        {
+            "name": "Secure Image signing",
+            "description": "Signs and KDF-CMAC-encrypts the input file and converts it to the MCUboot format",
+            "enabled": true,
+            "commands": [
+                {
+                    "command": "sign",
+                    "inputs": [
+                        {
+                            "description": "Secure application",
+                            "file": "../build/last_config/mtb-example-ce243041-secure-boot-and-update-with-epb.hex",
+                            "signing-key": "{{ IMAGE_SIGNING_KEY }}",
+                            "header-size": "0x400",
+                            "slot-size": "{{ CYMEM_CM33_0_S_secondary_slot_SIZE }}",
+                            "fill-value": "0x00",
+                            "min-erase-size": "0x200",
+                            "signature-encoding": "{{ IMAGE_SIG_ENCODING }}",
+                            "pubkey-encoding": "der",
+                            "pubkey-format": "hash",
+                            "hex-address": "{{ CYMEM_CM33_0_S_secondary_slot_S_START }}",
+                            "image-version": "{{ IMAGE_VERSION_STRING }}",
+                            "align": "1",
+                            "boot-record": "SecureApp",
+                            "pad": true,
+                            "sha": "{{ IMAGE_SHA }}",
+                            "encryption-secret-key": "{{ IMAGE_ENCRYPTION_KEY }}",
+                            "encryption-key-role": "CMAC-KDF"
+                        }
+                    ],
+                    "outputs": [
+                        {
+                            "description": "Signed and encrypted secured application",
+                            "file": "../build/last_config/mtb-example-ce243041-secure-boot-and-update-with-epb_update.hex",
+                            "format": "ihex"
+                        }
+                    ],
+                    "extra_config": [
+                        {
+                            "project": "mtb-example-ce243041-secure-boot-and-update-with-epb",
+                            "debug_config_name": "mtb-example-ce243041-secure-boot-and-update-with-epb",
+                            "default": true,
+                            "build_dependency": "project"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
