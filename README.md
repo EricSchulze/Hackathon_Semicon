@@ -216,6 +216,182 @@ Report total memory impact, not just individual key sizes. Include certificates,
 - The implementation is reproducible, understandable, and testable.
 
 
+## Verified Windows Bring-Up: PSC3M6 and SPDM Profile P4
+
+This section records the setup completed on **2026-11-10/11**. It documents
+successful firmware build/programming, device provisioning, SPDM negotiation
+and an Eclipse import. **A complete `CHALLENGE_AUTH` test was deliberately
+cancelled before completion and is not claimed as passed.** These observations
+do not establish that all challenge tasks or security properties above have
+been demonstrated.
+
+The supplied `psoc-spdm-responder` application is a **separate Git repository**.
+Its detailed application README is not tracked as a file in this parent
+repository, so the essential setup notes are included here directly. Obtain
+the responder and the separate provisioning/host applications from the
+supplied SPDM materials before following the application commands below.
+
+### Changes Needed for This Setup
+
+| Area | Required change or recovery | Reason |
+|---|---|---|
+| Board and profile defaults | Set `TARGET=APP_KIT_PSC3M6_EVAL` and `SPDM_PROFILE=P4` in the responder's `common.mk` | Match the actual M6 board and its ML-DSA-87 identity |
+| Build tools | Use ModusToolbox tools 3.9, GNU Arm 14.2.1, native CMake 3.31.6 and Edge Protect Security Suite 2.4.0 | CMake was missing and is required by the libspdm prebuild |
+| Build environment | Set `CY_TOOLS_PATHS`, `HOME` and the tool PATH for both the shell and Eclipse | The installation was outside the default tool search paths |
+| Project location | Use a short path or a `subst P:` alias to the directory containing the SPDM applications | The original nested path with spaces and parentheses broke the Windows/Cygwin build |
+| Generated BSP files | Run `make getlibs`; back up and regenerate stale `GeneratedSource` from the existing `design.modus` when necessary | Device-library metadata and generated symbols were stale or missing |
+| USB-I2C bridge | Select the correct bridge firmware/mode and wire SDA/SCL to I2C pins, not SWD pins | USB enumeration alone did not establish a working I2C connection |
+| Eclipse | Export and import the application plus both Secure and Nonsecure projects; include CMake in the IDE PATH | The IDE needs the same tools as the command-line build |
+
+No manual change to the cryptographic algorithms was needed for this bring-up.
+The source `design.modus`, device lifecycle and PSC3M6 security policy were not
+changed. M6 partitioning comes from the Device Configurator; do not apply the
+M5-specific OEM-policy procedure to M6 without checking the platform guidance.
+
+### Correct PSC3M6 I2C Wiring
+
+**The original SPDM example table reversed the reference and ground pins:
+PSC3M6 J15.7 is 3.3 V, and J15.8 is GND.**
+
+For MiniProg4, use its **12-pin, 2x6 communication header**, not a SWD header:
+
+| MiniProg4 pin | Signal | PSC3M6 connection |
+|---|---|---|
+| 1 | VTARG reference | J15.7 / 3.3 V |
+| 2 | SDA | J16.6 / P9.2 |
+| 4 | SCL | J16.5 / P9.0 |
+| 12 | GND | J15.8 / GND |
+
+A physically detached KitProg3 section from **CY8CPROTO-062-4343W** was also
+used. Its pin labels and connector positions are different:
+
+| Detached KitProg3 pin | Signal | PSC3M6 connection |
+|---|---|---|
+| `12.1` / `P12.1`, J7 pin 5 | SDA | J16.6 / P9.2 |
+| `12.0` / `P12.0`, J7 pin 4 | SCL | J16.5 / P9.0 |
+| J4 pin 1 | VTARG reference input | J15.7 / 3.3 V |
+| J4 pin 2 | GND | J15.8 / GND |
+
+`J7.5` means pin 5 of connector J7, not necessarily a printed board label.
+J4 is the five-pin SWD connector. **Only VTARG and GND belong on J4 for this
+I2C setup; SWDIO/SWDCLK are not SDA/SCL.**
+
+Power the PSC3 through its on-board J-Link USB connector **J13** and the bridge
+through its own USB connector. VTARG is an input for voltage-level translation,
+not a power output for the target. Disconnect both USB supplies before
+rewiring. Do not connect VBUS/5 V to the PSC3's 3.3 V reference or I2C pins,
+and do not join independently driven supply rails if KitProg3 is still attached
+to another powered board.
+
+### Bridge Firmware and Mode
+
+- The original MiniProg4 was switched from DAPLink to **`kp3-hid`** using
+	`fw-loader --mode`; its firmware was not updated during that test.
+- The detached KitProg3 originally ran firmware **1.01.158**. Updating that
+	selected probe with `fw-loader --update-kp3` to **2.90.1804**, then using
+	**`kp3-bulk`**, made its I2C interface visible to the Windows DFU host.
+	This updates the programmer, not the PSC3 firmware.
+- HID did not expose I2C for that updated KitProg3 setup. Check the actual
+	result with `dfuh-cli --display-hw`; do not assume one mode works for every
+	firmware/hardware combination. Select the corresponding `--hwid`.
+- Standard KitProg3 firmware supplies the USB-I2C bridge. No separate SPDM
+	firmware or MODE-button press is needed to start a host test.
+
+The tested address was **0x08**. MiniProg4 worked at **400 kHz**; the final
+KitProg3 transfer tests used **100 kHz**. Wrong connectors, reversed ground/
+reference wiring, loose jumpers, USB unplugging and laptop battery loss were
+encountered during setup. Keep the wires secure and the laptop on external
+power throughout a long test. An initial Enter-DFU write failure (DFU error 3,
+exit code 8195) occurs before SPDM and does not prove a signature rejection.
+
+### Build and Eclipse Setup
+
+For a fresh setup, obtain the supplied application and its libspdm submodule
+and dependencies first. Prefer a short checkout path. The example below assumes
+`P:` maps to the parent containing `psoc-spdm-responder` and native CMake is
+installed under `C:/Tools/cmake`; adapt these paths to your installation:
+
+```powershell
+$env:CY_TOOLS_PATHS = 'C:/Infineon/Tools/ModusToolbox/tools_3.9'
+$env:HOME = $env:USERPROFILE.Replace('\', '/')
+$env:PATH = 'C:/Tools/cmake/bin;C:/Infineon/Tools/ModusToolbox/tools_3.9/modus-shell/bin;' + $env:PATH
+$make = Join-Path $env:CY_TOOLS_PATHS 'modus-shell/bin/make.exe'
+& $make -C P:/psoc-spdm-responder getlibs
+& $make -C P:/psoc-spdm-responder build TARGET=APP_KIT_PSC3M6_EVAL SPDM_PROFILE=P4
+& $make -C P:/psoc-spdm-responder eclipse TARGET=APP_KIT_PSC3M6_EVAL SPDM_PROFILE=P4 BSP_PROGRAM_INTERFACE=JLink
+```
+
+If generated BSP symbols are stale, back up `GeneratedSource` before the
+recovery command below. This is not a mandatory action for every build:
+
+```powershell
+& (Join-Path $env:CY_TOOLS_PATHS 'device-configurator/device-configurator-cli.exe') --build 'P:/psoc-spdm-responder/bsps/TARGET_APP_KIT_PSC3M6_EVAL/config/design.modus' --readonly --force
+```
+
+Start Eclipse with the same tool environment, including the CMake, GCC and
+Edge Protect paths. Updating a shell's PATH does not update an already running
+IDE. The local Eclipse starter was extended with the existing CMake path;
+that machine-specific starter is not part of this repository. A `P:` alias is
+also local and must be recreated after a Windows restart if project paths
+still refer to it.
+
+`make eclipse` exported these three projects:
+
+- `psoc-spdm-responder`
+- `psoc-spdm-responder.proj_cm33_s`
+- `psoc-spdm-responder.proj_cm33_ns`
+
+Import them **in place**, without copying into the workspace. If the generic
+Eclipse importer finds only the application, import `proj_cm33_s` and
+`proj_cm33_ns` separately. Existing workspace projects were retained. Import
+preference-lock and interrupted local-history messages were resolved by
+regular exits/restarts after the import completed, without deleting the
+workspace. The final loaded Eclipse session showed no new errors.
+
+Use the PSC3's **on-board J-Link** for Program/Debug, not the I2C-only KitProg3
+wiring. When selecting a particular probe, the make variable is
+**`MTB_PROBE_SERIAL`**, not `PROBE_SERIAL`. The host **SPDM Requester remains a
+separate program**; importing into Eclipse neither starts authentication nor
+automatically removes the DFU host's per-transfer overhead.
+
+### Provisioning and Observed Verification Status
+
+The separate provisioning application/host tools were used before flashing
+the responder. Their Python environment needed **PyYAML** and
+**cryptography >= 46** for ML-DSA support; version 50.0.2 was used. The device
+generated its private ML-DSA-87 key in **PAS slot 0**. A demo CA signed the CSR,
+and the **15,168-byte** certificate chain was placed in **PAS slot 1**, exposed
+as **SPDM certificate slot 0**. Certificate readback matched byte-for-byte, and
+provisioning `prove-cert` verified key possession.
+
+The responder was programmed and verified without a full-device erase,
+freeze/finalize operation or lifecycle change, retaining those assets. Preserve
+PAS contents when switching applications; do not publish production/private
+keys or use the demo CA as a production identity.
+
+| Check | Observed result |
+|---|---|
+| P4 responder build and programming | Passed, including programming verification |
+| Asset provisioning, readback and `prove-cert` | Passed; assets were not frozen |
+| Responder startup | Certificate loaded, context ready, I2C listening |
+| SPDM negotiation | SPDM 1.4, ML-DSA-87, ML-KEM-1024, SHA-384, AES-256-GCM |
+| SPDM certificate transfer | Successful fragments; complete SPDM certificate validation not finished |
+| Eclipse export/import | Application and both projects imported; clean final session |
+| `CHALLENGE_AUTH`, signed measurements, secure session, encrypted exchange | Not verified end-to-end |
+
+The final authentication run was cancelled intentionally to proceed with the
+Eclipse import. Earlier runs were interrupted by disconnected cables or power
+loss. A cancelled run reporting `SPDM_REQ_EAUTH` does not establish an invalid
+signature. Provisioning `prove-cert` is distinct from SPDM `CHALLENGE_AUTH`.
+
+Windows host/bridge startup measured about **11 seconds per DFU transaction**;
+the small GET_VERSION exchange itself took under one second after startup.
+The certificate and ML-DSA-87 signature use many small fragments, so a complete
+test can take many minutes. Let it finish before claiming authenticated SPDM
+success. Build/IDE caches, local logs, personal machine paths and private keys
+should not be included in a GitHub publication.
+
+
 ## Abbreviations and Terms
 
 | Abbreviation or term | Meaning |
