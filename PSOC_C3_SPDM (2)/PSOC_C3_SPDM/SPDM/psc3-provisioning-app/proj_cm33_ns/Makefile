@@ -187,6 +187,6 @@ CY_GETLIBS_DEPS_PATH+=../platforms/$(PLATFORM)/deps/proj_cm33_ns
 #
 # The default depends on the selected TOOLCHAIN (GCC_ARM uses the ModusToolbox
 # IDE provided compiler by default).
-CY_COMPILER_PATH?=
+# CY_COMPILER_PATH?=
 
 include $(CY_TOOLS_DIR)/make/start.mk
